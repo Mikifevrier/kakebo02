@@ -1,6 +1,9 @@
 import sqlite3
 
 class DBmanager():
+    def __init__(self, ruta_baseDatos):
+        self.database_path = ruta_baseDatos
+
     def __toDict__(self, cur):
         # Obtenemos los datos de la consulta
         claves = cur.description
@@ -18,7 +21,7 @@ class DBmanager():
 
     def consultaMuchasSQL(self, query, parametros=[]):
         # Abrimos la conexion
-        conexion = sqlite3.connect("movimientos.db")
+        conexion = sqlite3.connect(self.database_path)
         cur = conexion.cursor()
 
         # Ejecutamos la consulta
@@ -33,7 +36,7 @@ class DBmanager():
             return resultado[0]
 
     def modificaTablaSQL(self, query, parametros=[]):
-        conexion = sqlite3.connect("movimientos.db")
+        conexion = sqlite3.connect(self.database_path)
         cur = conexion.cursor()
 
         cur.execute(query, parametros)
