@@ -7,6 +7,19 @@ const categorias = {
 
 let losMovimientos
 
+function recibeRespuesta() {
+    if (this.readyState === 4 && this.status === 200) {
+        const respuesta = JSON.parse(this.responseText)
+
+        if(respuesta.status !== "success") {
+            alert("Se ha producido un error en acceso a servidor " + respuesta.mensaje)
+            return
+        }
+        
+        llamaApiMovimientos()
+    }
+}
+
 function detallaMovimiento(id) {
     let movimiento
     for (let i=0; i<losMovimientos.length; i++) {
@@ -19,6 +32,7 @@ function detallaMovimiento(id) {
 
     if (!movimiento) return
 
+    document.querySelector("#idMovimiento").value = id  /*podemos guardarlo en el http */
     document.querySelector("#fecha").value = movimiento.fecha
     document.querySelector("#concepto").value = movimiento.concepto
     document.querySelector("#categoria").value = movimiento.categoria
@@ -40,6 +54,8 @@ function muestraMovimientos() {
         }
 
         losMovimientos = respuesta.movimientos
+        const tbody = document.querySelector(".tabla-movimientos tbody")       /*esto lo inserta dentro de tbody*/
+        tbody.innerHTML = ""
 
         for (let i=0; i < respuesta.movimientos.length; i++) {
             const movimiento = respuesta.movimientos[i]
@@ -56,21 +72,41 @@ function muestraMovimientos() {
                 <td>${movimiento.cantidad} €</td>
             `
             fila.innerHTML = dentro
-            const tbody = document.querySelector(".tabla-movimientos tbody")       /*esto lo inserta dentro de tbody*/
             tbody.appendChild(fila)
         }
     }
 }
 
 xhr = new XMLHttpRequest()
-xhr.onload = muestraMovimientos                                                  /*quien gestiona la llamada asincrona*/
 
 function llamaApiMovimientos() {
     xhr.open("GET", `http://localhost:5000/api/v1/movimientos`, true)
+    xhr.onload = muestraMovimientos                                                  /*quien gestiona la llamada asincrona*/
     xhr.send()
 }
 
 window.onload = function() {                                /*esto se ejecutará una vez se cargue la página, cuando esté renderizada, o si no se puede quedar pillada*/
     llamaApiMovimientos()
 
+    document.querySelector("#modificar")
+        .addEventListener("click", (ev) => {
+            ev.preventDefault()
+            const movimiento = {}
+            movimiento.fecha = document.querySelector("#fecha").value
+            movimiento.concepto = document.querySelector("#concepto").value
+            movimiento.categoria = document.querySelector("#categoria").value
+            movimiento.cantidad = document.querySelector("#cantidad").value
+            if (document.querySelector("#gasto").checked) {
+                movimiento.esGasto = 1
+            } else {
+                movimiento.esGasto = 0
+            }
+            
+            id = document.querySelector("#idMovimiento").value
+            xhr.open("PUT", `http://localhost:5000/api/v1/movimiento/${id}`, true)
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
+            xhr.onload = recibeRespuesta
+            xhr.send(JSON.stringify(movimiento))
+
+        })
 }
